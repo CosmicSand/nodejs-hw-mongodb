@@ -1,3 +1,3 @@
-import { startServer } from './server.js';
+import { setupServer } from './server.js';
 
-startServer();
+setupServer();
