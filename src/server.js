@@ -1,7 +1,8 @@
 import express from 'express';
 import pino from 'pino-http';
 import cors from 'cors';
-import { env } from './utils/env';
+import { env } from './utils/env.js';
+import { getAllContacts, getContactById } from './services/contacts.js';
 
 const PORT = Number(env('PORT', '3000'));
 
@@ -19,19 +20,45 @@ export const setupServer = () => {
     }),
   );
 
-  app.get('/', (req, res) => {
-    res.json({
-      message: 'Hello world!',
+  app.get('/contacts', async (req, res) => {
+    const contacts = await getAllContacts();
+
+    res.status(200).json({
+      status: 200,
+      message: 'Successfully found contacts!',
+      data: contacts,
     });
   });
+  app.get('/contacts/:contactID', async (req, res, next) => {
+    try {
+      const { contactID } = req.params;
 
-  app.use('*', (req, res, next) => {
+      const contact = await getContactById(contactID);
+
+      if (!contact) {
+        res.status(404).json({
+          message: 'Student not found',
+        });
+        return;
+      }
+
+      res.status(200).json({
+        status: 200,
+        message: `Successfully found contact with id ${contactID}!`,
+        data: contact,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.use('*', (req, res) => {
     res.status(404).json({
       message: 'Not found',
     });
   });
 
-  app.use((err, req, res, next) => {
+  app.use((err, req, res) => {
     res.status(500).json({
       message: 'Something went wrong',
       error: err.message,
